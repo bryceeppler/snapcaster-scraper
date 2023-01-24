@@ -140,7 +140,6 @@ results = []
 # Execute scrapers for each card name
 for card in cards:
     # Execute the bulk scrape for the current card name
-    print(f'{card["name"]} - fetching scrapers')
     scraperMap = fetchScrapers(card["name"])
     scrapers = scraperMap.values()
     # scrapers = [scraperMap['magicstronghold']]
@@ -177,5 +176,8 @@ for card in cards:
 
 # close the connection
 client.close()
-print(f'Scraped {len(cards)} cards in {time.time() - timer} seconds')
-print(f'Average time per card: {(time.time() - timer) / len(cards)} seconds')
+# print time in 2 decimales
+print(f'Scraped {len(cards)} cards in {round(time.time() - timer, 2)} seconds')
+print(f'Average time per card: {round((time.time() - timer) / len(cards), 2)} seconds')
+print(f'{datetime.now()}')
+print("===============================================")
