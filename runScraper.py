@@ -127,7 +127,7 @@ pipeline = [
     },
     { "$match": {"layout": {"$ne":"token"}} },
     { "$match": { "price_entry": { "$eq": [] } } },
-    { "$limit": 500 },
+    { "$limit": 70 },
     { "$project": { "name": 1, "oracle_id": 1 } }
 ]
 
