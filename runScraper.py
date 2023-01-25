@@ -95,6 +95,7 @@ def transform(scraper):
     return
 
 
+numCardAdded = 0
 timer = time.time()
 # Connect to the database
 client = pymongo.MongoClient(os.getenv('MONGO_URI'))
@@ -127,7 +128,7 @@ pipeline = [
     },
     { "$match": {"layout": {"$ne":"token"}} },
     { "$match": { "price_entry": { "$eq": [] } } },
-    { "$limit": 70 },
+    { "$limit": 50 },
     { "$project": { "name": 1, "oracle_id": 1 } }
 ]
 
@@ -156,12 +157,15 @@ for card in cards:
     # create a pricelist for each condition
     price_list = []
     for result in results:
-        price_list.append({
-            'price': result['price'],
-            'foil': result['foil'],
-            'condition': result['condition'],
-            'website': result['website']
-        })
+        try:
+            price_list.append({
+                'price': result['price'],
+                'foil': result['foil'],
+                'condition': result['condition'],
+                'website': result['website']
+            })
+        except:
+            pass
 
     # create the price_entry object
     price_entry = {
@@ -173,11 +177,12 @@ for card in cards:
     # insert the price_entry into the database
     price_entry_collection.insert_one(price_entry)
     print(f'{card["name"]} - inserted into db')
+    numCardAdded += 1
 
 # close the connection
 client.close()
 # print time in 2 decimales
-print(f'Scraped {len(cards)} cards in {round(time.time() - timer, 2)} seconds')
-print(f'Average time per card: {round((time.time() - timer) / len(cards), 2)} seconds')
+print(f'Scraped {numCardAdded} cards in {round(time.time() - timer, 2)} seconds')
+print(f'Average time per successful card: {round((time.time() - timer) / numCardAdded, 2)} seconds')
 print(f'{datetime.now()}')
 print("===============================================")
