@@ -102,9 +102,14 @@ client = pymongo.MongoClient(os.getenv('MONGO_URI'))
 db = client['snapcaster']
 cards_collection = db.cards
 price_entry_collection = db.price_entry
+print(f'Connected to database: {db.name}')
+print(f'Number of cards in DB: {cards_collection.count_documents({})}')
+print(f'Number of price entries in DB: {price_entry_collection.count_documents({})}')
 
 today = datetime.now()
 thirty_days_ago = today - timedelta(days=30)
+print("Today's date:", today)
+print("30 days ago:", thirty_days_ago)
 
 # Look for cards that do not have an entry in the price_entry collection
 # for the current date or the last 30 days
@@ -128,16 +133,22 @@ pipeline = [
     },
     { "$match": {"layout": {"$ne":"token"}} },
     { "$match": { "price_entry": { "$eq": [] } } },
-    { "$limit": 50 },
+    { "$limit": 5 },
     { "$project": { "name": 1, "oracle_id": 1 } }
 ]
+print("pipeline done")
 
 cards = cards_collection.aggregate(pipeline)
+print("cards done")
 cards = [card for card in cards]
+print("cards")
+
+print(cards)
 
 # List to store results from all threads
 results = []
 
+print(f'Fetched {len(cards)} cards')
 # Execute scrapers for each card name
 for card in cards:
     # Execute the bulk scrape for the current card name
@@ -165,6 +176,7 @@ for card in cards:
                 'website': result['website']
             })
         except:
+            print(f'Error adding {card["name"]}')
             pass
 
     # create the price_entry object
@@ -173,6 +185,7 @@ for card in cards:
         'date': today,
         'price_list': price_list
     }
+    print("entry created")
 
     # insert the price_entry into the database
     price_entry_collection.insert_one(price_entry)
