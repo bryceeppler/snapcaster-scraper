@@ -103,47 +103,30 @@ db = client['snapcaster']
 cards_collection = db.cards
 price_entry_collection = db.price_entry
 print(f'Connected to database: {db.name}')
-print(f'Number of cards in DB: {cards_collection.count_documents({})}')
-print(f'Number of price entries in DB: {price_entry_collection.count_documents({})}')
+# print(f'Number of cards in DB: {cards_collection.count_documents({})}')
+# print(f'Number of price entries in DB: {price_entry_collection.count_documents({})}')
 
 today = datetime.now()
 thirty_days_ago = today - timedelta(days=30)
-print("Today's date:", today)
-print("30 days ago:", thirty_days_ago)
+# print("Today's date:", today)
 
-# Look for cards that do not have an entry in the price_entry collection
-# for the current date or the last 30 days
+
 pipeline = [
     {
         "$lookup": {
             "from": "price_entry",
-            "let": { "oracle_id": "$oracle_id" },
+            "let": {"oracle_id": "$oracle_id"},
             "pipeline": [
-                { "$match": {
-                    "$expr": {
-                        "$and": [
-                            { "$eq": [ "$oracle_id", "$$oracle_id" ] },
-                            { "$gte": [ "$date", thirty_days_ago ] }
-                        ]
-                    }
-                }},
+                {"$match": {"$expr": {"$eq": ["$oracle_id", "$$oracle_id"]}}},
             ],
             "as": "price_entry"
         }
     },
-    { "$match": {"layout": {"$ne":"token"}} },
-    { "$match": { "price_entry": { "$eq": [] } } },
-    { "$limit": 5 },
-    { "$project": { "name": 1, "oracle_id": 1 } }
+    {"$match": {"price_entry": { "$eq": []}}},
+    {"$limit": 10}
 ]
-print("pipeline done")
 
-cards = cards_collection.aggregate(pipeline)
-print("cards done")
-cards = [card for card in cards]
-print("cards")
-
-print(cards)
+cards = list(cards_collection.aggregate(pipeline))
 
 # List to store results from all threads
 results = []
@@ -157,7 +140,7 @@ for card in cards:
     # scrapers = [scraperMap['magicstronghold']]
 
     print(f'{card["name"]} - scraping')
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         threadResults = executor.map(transform, scrapers)
 
     # Wait for all threads to finish
@@ -185,7 +168,6 @@ for card in cards:
         'date': today,
         'price_list': price_list
     }
-    print("entry created")
 
     # insert the price_entry into the database
     price_entry_collection.insert_one(price_entry)
