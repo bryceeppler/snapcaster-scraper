@@ -123,7 +123,7 @@ pipeline = [
         }
     },
     {"$match": {"price_entry": { "$eq": []}}},
-    {"$limit": 10}
+    {"$limit": 30}
 ]
 
 cards = list(cards_collection.aggregate(pipeline))
